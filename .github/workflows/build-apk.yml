@@ -30,23 +30,22 @@
           - name: Install Project Dependencies
             run: pnpm install --no-frozen-lockfile
 
-          - name: Setup Capacitor and Android Platform
-            run: |
-              npx quasar mode add capacitor --app-id site.yuanshen.map --app-name "Kongying Map"
-              cd src-capacitor
-              npm install --legacy-peer-deps
-              npm install @capacitor/android --legacy-peer-deps
-              npx cap add android
-              cd ..
-
-          - name: Build Web & Capacitor Assets
-            run: npx quasar build -m capacitor -T android
+          - name: Build Web Application
+            run: pnpm build
             env:
               NODE_OPTIONS: "--max-old-space-size=4096"
+              VITE_API_BASE: "https://yuanshen.site"
+
+          - name: Setup Capacitor and Android Platform
+            run: |
+              pnpm add -D @capacitor/core @capacitor/cli @capacitor/android
+              npx cap init "Kongying Map" "site.yuanshen.map" --web-dir "dist/spa"
+              npx cap add android
+              npx cap sync android
 
           - name: Compile APK with Gradle
             run: |
-              cd src-capacitor/android
+              cd android
               chmod +x gradlew
               ./gradlew assembleDebug
 
@@ -54,4 +53,4 @@
             uses: actions/upload-artifact@v4
             with:
               name: KongyingMap-debug-apk
-              path: src-capacitor/android/app/build/outputs/apk/debug/app-debug.apk
+              path: android/app/build/outputs/apk/debug/app-debug.apk
