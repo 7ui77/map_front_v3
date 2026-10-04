@@ -1,56 +1,72 @@
-    name: Build Android APK
+name: Build Android APK
 
-    on:
-      workflow_dispatch:
+on:
+  workflow_dispatch:
 
-    jobs:
-      build:
-        runs-on: ubuntu-latest
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-        steps:
-          - name: Checkout Code
-            uses: actions/checkout@v4
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-          - name: Setup Java JDK 21
-            uses: actions/setup-java@v4
-            with:
-              distribution: 'zulu'
-              java-version: '21'
+      - name: Setup Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
 
-          - name: Setup Node.js
-            uses: actions/setup-node@v4
-            with:
-              node-version: 22
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-          - name: Setup PNPM
-            uses: pnpm/action-setup@v3
-            with:
-              version: 8
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
 
-          - name: Install Project Dependencies
-            run: pnpm install --no-frozen-lockfile
+      - name: Configure PNPM Hoisting
+        run: echo "shamefully-hoist=true" >> .npmrc
 
-          - name: Build Web Application
-            run: pnpm build
-            env:
-              NODE_OPTIONS: "--max-old-space-size=4096"
-              VITE_API_BASE: "https://yuanshen.site"
+      - name: Install Project Dependencies
+        run: pnpm install --no-frozen-lockfile
 
-          - name: Setup Capacitor and Android Platform
-            run: |
-              npm install --save-dev @capacitor/core @capacitor/cli @capacitor/android
-              npx cap init "Kongying Map" "site.yuanshen.map" --web-dir "dist/spa"
-              npx cap add android
-              npx cap sync android
+      - name: Build Web Application
+        run: pnpm build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+          VITE_API_BASE: "https://yuanshen.site"
 
-          - name: Compile APK with Gradle
-            run: |
-              cd android
-              chmod +x gradlew
-              ./gradlew assembleDebug
+      - name: Setup Capacitor Configuration
+        run: |
+          pnpm add -D @capacitor/core @capacitor/cli @capacitor/android
+          cat << 'CEOF' > capacitor.config.json
+          {
+            "appId": "site.yuanshen.map",
+            "appName": "Kongying Map",
+            "webDir": "dist/spa",
+            "server": {
+              "androidScheme": "https",
+              "cleartext": true
+            }
+          }
+          CEOF
+          npx cap add android
+          npx cap sync android
 
-          - name: Upload APK Artifact
-            uses: actions/upload-artifact@v4
-            with:
-              name: KongyingMap-debug-apk
-              path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Accept Android Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+
+      - name: Compile APK with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KongyingMap-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
