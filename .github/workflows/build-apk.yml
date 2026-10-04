@@ -11,16 +11,16 @@
           - name: Checkout Code
             uses: actions/checkout@v4
 
-          - name: Setup Java JDK 17
+          - name: Setup Java JDK 21
             uses: actions/setup-java@v4
             with:
               distribution: 'zulu'
-              java-version: '17'
+              java-version: '21'
 
           - name: Setup Node.js
             uses: actions/setup-node@v4
             with:
-              node-version: 20
+              node-version: 22
 
           - name: Setup PNPM
             uses: pnpm/action-setup@v3
@@ -38,7 +38,7 @@
 
           - name: Setup Capacitor and Android Platform
             run: |
-              pnpm add -D @capacitor/core @capacitor/cli @capacitor/android
+              npm install --save-dev @capacitor/core @capacitor/cli @capacitor/android
               npx cap init "Kongying Map" "site.yuanshen.map" --web-dir "dist/spa"
               npx cap add android
               npx cap sync android
