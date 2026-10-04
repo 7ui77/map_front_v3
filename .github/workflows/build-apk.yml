@@ -28,20 +28,21 @@
               version: 8
 
           - name: Install Project Dependencies
-            run: pnpm install
+            run: pnpm install --no-frozen-lockfile
 
           - name: Setup Capacitor and Android Platform
             run: |
-              npx quasar mode add capacitor --app-id site.yuanshen.map --app-name "Kongying
-  Map"
+              npx quasar mode add capacitor --app-id site.yuanshen.map --app-name "Kongying Map"
               cd src-capacitor
-              npm install
-              npm install @capacitor/android
+              npm install --legacy-peer-deps
+              npm install @capacitor/android --legacy-peer-deps
               npx cap add android
               cd ..
 
-          - name: Build Quasar for Android
+          - name: Build Web & Capacitor Assets
             run: npx quasar build -m capacitor -T android
+            env:
+              NODE_OPTIONS: "--max-old-space-size=4096"
 
           - name: Compile APK with Gradle
             run: |
