@@ -1,7 +1,7 @@
     name: Build Android APK
 
     on:
-      workflow_dispatch: # Cho phép bấm nút chạy thủ công
+      workflow_dispatch:
 
     jobs:
       build:
@@ -10,6 +10,12 @@
         steps:
           - name: Checkout Code
             uses: actions/checkout@v4
+
+          - name: Setup Java JDK 17
+            uses: actions/setup-java@v4
+            with:
+              distribution: 'zulu'
+              java-version: '17'
 
           - name: Setup Node.js
             uses: actions/setup-node@v4
@@ -21,32 +27,20 @@
             with:
               version: 8
 
-          - name: Setup Java JDK 17
-            uses: actions/setup-java@v4
-            with:
-              distribution: 'zulu'
-              java-version: '17'
-
-          - name: Setup Android SDK
-            uses: android-actions/setup-android@v3
-
-          - name: Install Dependencies
+          - name: Install Project Dependencies
             run: pnpm install
 
-          - name: Add Capacitor Mode
+          - name: Setup Capacitor and Android Platform
             run: |
-              pnpm add -D @capacitor/cli @capacitor/core
-              npx quasar mode add capacitor
-            env:
-              CI: false
-
-          - name: Add Android Platform
-            run: |
+              npx quasar mode add capacitor --app-id site.yuanshen.map --app-name "Kongying
+  Map"
               cd src-capacitor
-              pnpm add @capacitor/android
+              npm install
+              npm install @capacitor/android
               npx cap add android
+              cd ..
 
-          - name: Build Quasar & Capacitor
+          - name: Build Quasar for Android
             run: npx quasar build -m capacitor -T android
 
           - name: Compile APK with Gradle
